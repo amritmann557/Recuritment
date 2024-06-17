@@ -1,0 +1,233 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\SalesOrder;
+use Illuminate\Http\Request;
+use Validator;
+use PDF;
+
+class SalesOrderController extends Controller
+{
+    public function index()
+    {
+		$data['sales']= SalesOrder::groupBy('unique_id')->get();
+        return view('WorkOrder.workOrder',$data);
+    }
+
+    public function store(Request $request)
+    {
+		//echo '<pre>';print_r($request->all());die;
+        $sales_data = $request->validate([
+			'orderDate'        => ['required'],
+            'customerName'     => ['required'],
+            'ownerTo'          => ['required','string', 'max:255'],
+            'orderTo'          => ['required','string', 'max:255'],
+            'jobName'          => ['required','string', 'max:255'],
+            'productCode'      => ['required', 'max:255'],
+            'manufacturedBy'   => ['required', 'max:255'],
+            'uploadImage'      => ['required'],
+        ], [
+		    'orderDate.required'       => 'Please Select Order Date',
+            'customerName.required'    => 'Please Enter Customer Name',
+            'ownerTo.required'         => 'Please Enter Owner To',
+            'orderTo.required'         => 'Please Enter Order To',
+            'jobName.required'         => 'Please Enter Job Name',
+            'productCode.required'     => 'Please Enter Product Code',
+            'manufacturedBy.required'  => 'Please Enter Manufactured By Detail',
+            'uploadImage.required'     => 'Please Upload Image',
+        ]);
+	   
+	   $unique_id = SalesOrder::orderBy('id', 'desc')->first();
+	   $number = str_replace('RGSO', '', $unique_id ? $unique_id->unique_id  : 0);
+	   if ($number == 0) {
+	   $number = 'RGSO0000001';
+	   } else {
+		$number = "RGSO" . sprintf("%07d", (int)$number + 1);
+	   }
+	   
+	   $str_time = time();
+		if ($request->file('uploadImage')) {
+            $file_type = $request->file('uploadImage')->extension();
+            $file_path = $request->file('uploadImage')->storeAs('img/sales', 'Sales_' . $str_time . '.' . $file_type, 'public');
+            $request->file('uploadImage')->move(public_path('img/sales'), 'Sales_' . $str_time . '.' . $file_type);
+        } else {
+            $file_path = null;
+        }
+	   
+	   for($i=0;$i<count($_POST['productCode']);$i++)
+			{
+                        
+				$salesarr[] = array(
+				'unique_id'         => $number,
+                'orderDate'         => $_POST['orderDate'],
+                'ownerTo'           => $_POST['ownerTo'],
+                'orderTo'           => $_POST['orderTo'],
+                'customerName'      => $_POST['customerName'],
+                'manufacturedDate'  => $_POST['manufacturedDate'],
+                'jobName'           => $_POST['jobName'],
+                'deliveryDate'      => $_POST['deliveryDate'],
+                'contact_number'    => $_POST['contact_number'],
+                'estimateNumber'    => $_POST['estimateNumber'],
+                'city'              => $_POST['city'],
+                'uploadImage'       => $file_path,
+                'emailAddress'      => $_POST['emailAddress'],
+                'modeOfDelivery'    => $_POST['modeOfDelivery'],
+				'productCode'       => $_POST['productCode'][$i],
+				'priceDetails'      => $_POST['priceDetails'][$i],
+				'quantity'          => $_POST['quantity'][$i],
+				'manufacturedBy'    => $_POST['manufacturedBy'][$i],
+				);	   				
+			}
+		   $data=SalesOrder::insert($salesarr);
+	   echo json_encode(['status' => 'success', 'message' => 'Sales Order Data Succesfully Submitted']);
+    
+    }
+
+    public function viewSalesOrder()
+	{
+		$result['data']= SalesOrder::select('*')->where('unique_id', $_GET['id'])->get();
+		return view('WorkOrder.viewSalesOrder',$result);
+	}
+	
+	public function editSalesOrder()
+	{
+		$result['data']= SalesOrder::select('*')->where('unique_id', $_GET['id'])->get();
+		return view('WorkOrder.editSalesOrder',$result);
+	}
+	
+	public function deletework(){
+		$data=SalesOrder::where('id', $_POST['id'])->delete();
+        echo json_encode(['status' => 'success', 'message' => 'Data Deleted Successfully']);
+	}
+	
+	public function save_editSalesOrder(Request $request)
+	{
+		$validator1 = Validator::make(
+			$request->all(),
+			[
+			'edit_orderDate'        => ['required'],
+            'edit_customerName'     => ['required'],
+            'edit_ownerTo'          => ['required','string', 'max:255'],
+            'edit_orderTo'          => ['required','string', 'max:255'],
+            'edit_jobName'          => ['required','string', 'max:255'],
+            'edit_productCode'      => ['required', 'max:255'],
+            'edit_manufacturedBy'   => ['required', 'max:255'],
+        ], [
+		    'edit_orderDate.required'       => 'Please Select Order Date',
+            'edit_customerName.required'    => 'Please Enter Customer Name',
+            'edit_ownerTo.required'         => 'Please Enter Owner To',
+            'edit_orderTo.required'         => 'Please Enter Order To',
+            'edit_jobName.required'         => 'Please Enter Job Name',
+            'edit_productCode.required'     => 'Please Enter Product Code',
+            'edit_manufacturedBy.required'  => 'Please Enter Manufactured By Detail',
+            ],
+			[]
+		);
+
+		$validator2 = Validator::make(
+			$request->all(),
+			[
+            'new_edit_productCode'      => ['required', 'max:255'],
+            'new_edit_manufacturedBy'   => ['required', 'max:255'],
+        ], [
+            'new_edit_productCode.required'     => 'Please Enter Product Code',
+            'new_edit_manufacturedBy.required'  => 'Please Enter Manufactured By Detail',
+            ],	   
+			[]
+		);
+		$sales_id = $request->edit_ID;
+		if ($validator1->fails() || $validator2->fails()) 
+        {
+            $errors1 = $validator1->errors();
+			$errors2 = $validator2->errors();
+            return response()->json(['status' => 'error', 'error1' => $errors1, 'error2' => $errors2]);
+        }
+		else
+		{			
+												
+			for($i=0;$i<sizeof($request->new_edit_id);$i++)
+			{	
+                 $str_time = time();
+				if ($request->file('edit_uploadImage')) {
+					$file_type = $request->file('edit_uploadImage')->extension();
+					$file_path = $request->file('edit_uploadImage')->storeAs('img/sales', 'Sales_' . $str_time . '.' . $file_type, 'public');
+					$request->file('edit_uploadImage')->move(public_path('img/sales'), 'Sales_' . $str_time . '.' . $file_type);
+				} else {
+					$file_path = $request->imageID;
+				}
+			   
+			   $salesarr = array(
+				'unique_id'         => $sales_id,
+				'orderDate'         => $_POST['edit_orderDate'],
+				'ownerTo'           => $_POST['edit_ownerTo'],
+				'orderTo'           => $_POST['edit_orderTo'],
+				'customerName'      => $_POST['edit_customerName'],
+				'manufacturedDate'  => $_POST['edit_manufacturedDate'],
+				'jobName'           => $_POST['edit_jobName'],
+				'deliveryDate'      => $_POST['edit_deliveryDate'],
+				'contact_number'    => $_POST['edit_contact_number'],
+				'estimateNumber'    => $_POST['edit_estimateNumber'],
+				'city'              => $_POST['edit_city'],
+				'uploadImage'       => $file_path,
+				'emailAddress'      => $_POST['edit_emailAddress'],
+				'modeOfDelivery'    => $_POST['edit_modeOfDelivery'],
+				'productCode'       => $_POST['edit_productCode'][$i],
+				'priceDetails'      => $_POST['edit_priceDetails'][$i],
+				'quantity'          => $_POST['edit_quantity'][$i],
+				'manufacturedBy'    => $_POST['edit_manufacturedBy'][$i],
+				);	   							   
+	
+				$data_update = SalesOrder::where('unique_id', $sales_id)
+												->where('id', $request->new_edit_id[$i])
+												->update($salesarr);
+			}
+			
+			
+			// add
+			if($request->new_edit_productCode != null || $request->new_edit_productCode != "")
+			{			
+				for($i=0;$i<sizeof($request->new_edit_productCode);$i++)
+				{
+					$new_salesarr = array(
+					'unique_id'         => $sales_id,
+					'orderDate'         => $_POST['edit_orderDate'],
+					'ownerTo'           => $_POST['edit_ownerTo'],
+					'orderTo'           => $_POST['edit_orderTo'],
+					'customerName'      => $_POST['edit_customerName'],
+					'manufacturedDate'  => $_POST['edit_manufacturedDate'],
+					'jobName'           => $_POST['edit_jobName'],
+					'deliveryDate'      => $_POST['edit_deliveryDate'],
+					'contact_number'    => $_POST['edit_contact_number'],
+					'estimateNumber'    => $_POST['edit_estimateNumber'],
+					'city'              => $_POST['edit_city'],
+					'uploadImage'       => $file_path,
+					'emailAddress'      => $_POST['edit_emailAddress'],
+					'modeOfDelivery'    => $_POST['edit_modeOfDelivery'],
+					'productCode'       => $_POST['new_edit_productCode'][$i],
+					'priceDetails'      => $_POST['new_edit_priceDetails'][$i],
+					'quantity'          => $_POST['new_edit_quantity'][$i],
+					'manufacturedBy'    => $_POST['new_edit_manufacturedBy'][$i],
+					);	   		   				
+				}
+
+				$data_add = SalesOrder::insert($new_salesarr);
+			}
+			return response()->json(['status' => 'success', 'message' => 'Data Updated Successfully']);
+		}
+	}
+	
+	public function deleteworkOrderDetails()
+	{
+		$data=SalesOrder::where('unique_id', $_POST['id'])->delete();
+        echo json_encode(['status' => 'success', 'message' => 'Data Deleted Successfully']);
+	}
+	
+	public function printworkOrderDetails()
+	{
+		$data['result']= SalesOrder:: where('unique_id', $_GET['id'])->get();
+		return view('WorkOrder.printWorkOrder',$data);
+		//$invoice = PDF::loadView('WorkOrder.printWorkOrder',$data);
+        //return $invoice->stream();
+	}
+}

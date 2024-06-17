@@ -1,0 +1,239 @@
+@extends('layouts_new.app_new')
+@section('content')
+<section class="section">
+    <ul class="breadcrumb breadcrumb-style ">
+		<li class="breadcrumb-item">
+		  <h4 class="page-title m-b-0">Profile Management</h4>
+		</li>
+		<li class="breadcrumb-item">
+		  <a href="{{route('home')}}">
+			<i data-feather="home"></i></a>
+		</li>
+		<li class="breadcrumb-item active">Employee Management</li>
+	  </ul>
+    <div class="row">
+	    <div class="col-12">
+		    <div class="card">
+		        <div class="card-header">
+			        <h4>Employee Management</h4>
+		        </div>
+				<div class="buttons mt-3">
+				    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target=".bd-example-modal-lg" style="float:right;margin-right:31px;width:170px;">Add Employee</button>
+                </div>
+		        <div class="card-body">
+			        <div class="table-responsive">
+			            <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
+							<thead>
+							    <tr>
+									<th class="text-center">
+									  #
+									</th>
+									<th>Employee ID</th>
+									<th>Employee Name</th>
+									<th>Contact Number</th>
+									<th>Email Address</th>
+									<th>Position</th>
+									<th>Actions</th>
+							    </tr>
+							</thead>
+							<tbody>
+							    @foreach($employee as $key=>$data)
+									<tr>
+										<td class="text-center">{{$key+1}}</td>
+										<td>{{$data->unique_id}}</td>
+										<td>{{$data->employeeName}}</td>									   
+										<td>{{$data->contact_number}}</td>									   
+										<td>{{$data->email}}</td>									   
+										<td>{{$data->position}}</td>										
+										<td>
+											<a href="#" rel="{{$data->id}}" class="btn btn-primary" id="viewEmployeeButton">View</a>
+											<a href="#" rel="{{$data->unique_id}}" class="btn btn-primary" id="editEmployeeButton">Edit</a>
+											<a href="#" class="btn btn-primary" rel="{{$data->unique_id}}" id="deleteEmployeeButton">Delete</a>
+										</td>
+									</tr>
+                                @endforeach 
+						    </tbody>
+			            </table>
+			        </div>
+		        </div>
+		    </div>
+	    </div>
+    </div> 
+</section>
+<!-- Add Student Modal -->
+<div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+	    <div class="modal-content">
+	        <div class="modal-header">
+		        <h5 class="modal-title" id="myLargeModalLabel">Add Employee Details</h5>
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        </div>
+	        <div class="modal-body">
+			    <div class="card-body">
+					<form method="post" id="add_Employee_details">
+						@csrf
+						<div class="row">
+						    <div class="col-md-6">
+							    <label class="design">Employee ID</label>
+                                <input type="text" class="form-control" value="Auto Generated" readonly>
+							</div>
+							<div class="col-md-6">
+							    <label class="design">Employee Name</label>
+                                <input type="text" class="form-control" id="employeeName" name="employeeName" required>
+								<span id="employeeName_error" style="color: red"></span>
+							</div>
+						</div>
+						<div class="row mt-2">
+							<div class="col-md-6">
+							    <div class="form-group">
+                                    <label class="design">Contact Number</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">
+                                                <i class="fas fa-phone"></i>
+                                            </div>
+                                        </div>
+                                        <input type="text" class="form-control phone-number" placeholder="+91 XXXX YYYY" id="contact_number" name="contact_number">
+                                    </div>
+									<span id="contact_number_error" style="color: red"></span>
+                                </div>								
+							</div>
+							<div class="col-md-6">
+							    <label class="design">Email Adress</label>
+								<div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                    </div>
+                                    <input type="email" class="form-control" id="email" name="email">
+								</div>
+								<span id="email_error" style="color: red"></span>
+							</div>
+						</div>
+						
+						<div class="row mt-2">
+						    <div class="col-md-6">
+							    <label class="design">Position</label>
+                                <select class="form-control" id="position" name="position">
+								    <option value="">Select</option>
+									@foreach($designation as $desi)
+									<option value="{{$desi->designationName}}">{{$desi->designationName}}</option>
+									@endforeach
+								</select>
+								<span id="position_error" style="color: red"></span>
+							</div>
+							<div class="col-md-6">
+							    <label class="design">Department Name</label>
+                                <select class="form-control" id="department" name="department">
+								      <option value="">Select</option>
+								      <option value="Corporate">Corporate</option>
+								      <option value="Army">Army</option>
+								</select>
+								<span id="department_error" style="color: red"></span>
+							</div>
+						</div>
+						<div class="row mt-2">
+						    <div class="col-md-6">
+							    <label class="design">Email Adress</label>
+                                <input type="email" class="form-control" id="email" name="email">
+								<span id="email_error" style="color: red"></span>
+							</div>
+							<div class="col-md-6">
+							    <div class="form-group">
+                                    <label class="design">Password</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">
+                                                <i class="fas fa-lock"></i>
+                                            </div>
+                                        </div>
+                                        <input type="password" class="form-control pwstrength" data-indicator="pwindicator" id="password" name="password">
+                                    </div>
+                                    <div id="pwindicator" class="pwindicator">
+                                        <div class="bar"></div>
+                                        <div class="label"></div>
+                                    </div>
+                                </div>
+								<span id="password_error" style="color: red"></span>
+							</div>
+						</div>
+						<div class="row mt-2">
+						    <div class="col-md-6">
+							    <label class="design">Gender</label>
+                                <select class="form-control" id="gender" name="gender">
+								    <option value="">Select</option>
+								    <option value="Male">Male</option>
+								    <option value="Female">Female</option>
+								    <option value="Others">Others</option>
+								</select>
+								<span id="address_error" style="color: red"></span>
+							</div>
+						    <div class="col-md-6">
+							    <label class="design">Address</label>
+                                <textarea class="form-control" id="address" name="address"></textarea>
+								<span id="address_error" style="color: red"></span>
+							</div>
+						</div>
+						<div class="buttons mt-3">
+						    <button type="button" class="btn btn-lg btn-primary" style="width: 257px;margin-left:288px;" id="saveEmployeeDetails">Save Employee</button>
+						    <button type="button" class="btn btn-lg btn-danger" style="width: 257px;" data-dismiss="modal">Back</button>														
+						</div>
+					</form>
+				</div>
+	        </div>    
+		</div>
+    </div>
+</div>
+
+<!-- Start View Student Details Modal -->
+<div class="modal fade bd-example-modal-lg" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+	    <div class="modal-content">
+	        <div class="modal-header">
+		        <h5 class="modal-title" id="myLargeModalLabel">View Employee Details</h5>
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        </div>
+	        <div class="modal-body">
+			    <div class="card-body">
+				    <section class="section">
+					    <ul class="breadcrumb breadcrumb-style ">
+							<li class="breadcrumb-item">
+							  <h4 class="page-title m-b-0">Profile Management</h4>
+							</li>
+							<li class="breadcrumb-item">
+							  <a href="{{route('home')}}">
+								<i data-feather="home"></i></a>
+							</li>
+							<li class="breadcrumb-item">View Employee Details</li>
+					    </ul>
+					    <div class="section-body" id="view_Details">
+					    
+						</div>
+                    </section>
+				</div>
+	        </div>    
+		</div>
+    </div>
+</div>
+
+<div class="modal fade bd-example-modal-lg" id="editEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+	    <div class="modal-content">
+	        <div class="modal-header">
+		        <h5 class="modal-title" id="myLargeModalLabel">Edit Course Details</h5>
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        </div>
+	        <div class="modal-body">
+			    <div class="card-body" id="show_edit_Details">
+					
+				</div>
+	        </div>    
+		</div>
+    </div>
+</div>
+<!-- End View Staff Details Modal -->
+@section('javascript')
+@include('ProfileManagement.js.employee')
+@endsection
+@endsection

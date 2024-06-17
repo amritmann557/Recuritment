@@ -1,0 +1,184 @@
+@extends('layouts_new.app_new')
+
+@section('content')
+<style>
+    .required:after{ 
+        content:'*'; 
+        color:red; 
+        padding-left:5px;
+    }
+</style>
+<section class="section">
+    <ul class="breadcrumb breadcrumb-style ">
+		<li class="breadcrumb-item">
+		  <h4 class="page-title m-b-0">Master Options</h4>
+		</li>
+		<li class="breadcrumb-item">
+		  <a href="{{route('home')}}">
+			<i data-feather="home"></i></a>
+		</li>
+		<li class="breadcrumb-item active">Company Content</li>
+	  </ul>
+    <div class="row">
+	    <div class="col-12">
+		    <div class="card">
+		        <div class="card-header">
+			        <h4>Company Content</h4>
+		        </div>
+				<div class="buttons mt-3">
+				    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" style="float:right;margin-right:31px;width:170px;">Add Company Content</button>
+                </div>
+		        <div class="card-body">
+			        <div class="table-responsive">
+			            <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
+							<thead>
+							    <tr>
+									<th class="text-center">
+									  #
+									</th>
+									<th>ID</th>
+									<th>Content Name</th>
+									<th>Actions</th>
+							    </tr>
+							</thead>
+							<tbody>
+							   @foreach($about as $key=>$data)
+									<tr>
+										<td class="text-center">{{$key+1}}</td>
+										<td>{{$data->unique_id}}</td>
+										<td>{{$data->titleName}}</td>
+										<td>
+											<a href="#" rel="{{$data->id}}" class="btn btn-primary" id="editContentDetails">Edit</a>
+											<a href="#" class="btn btn-primary" rel="{{$data->id}}" id="deleteContent">Delete</a>
+										</td>
+									</tr>
+								@endforeach
+						    </tbody>
+			            </table>
+			        </div>
+		        </div>
+		    </div>
+	    </div>
+    </div> 
+</section>
+<!-- Add Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="formModal"
+          aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+		    <div class="modal-header">
+				<h5 class="modal-title" id="formModal">Add Content Details</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				  <span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+		    <div class="modal-body">
+			    <form id="aboutForm">
+				@csrf
+				    <div class="form-group">
+					    <label>ID</label>
+						<div class="input-group">
+						  <input type="text" class="form-control" placeholder="Auto Generated" readonly>
+						</div>
+				    </div>
+					<div class="row mt-3">
+						<div class="col-md-12">
+							<div class="form-group">
+								<label for="customer_name">Title Name:</label>
+								<select class="form-control form-control-user success" name="titleName"  id="titleName">
+								     <option value="">Select</option>
+								     <option value="About Company">About Company</option>
+								     <option value="Our Aim">Our Aim</option>
+								     <option value="Our Strength">Our Strength</option>
+								     <option value="Employer's Testimonial">Employer's Testimonial</option>
+								     <option value="Employee's Testimonial">Employee's Testimonial</option>
+								     <option value="Terms And Conditions">Terms And Conditions</option>
+								</select>
+								<span id="titleName_error" style="color: red"></span>
+							</div>
+						</div>
+					</div>
+			        <div class="row mt-3">
+						<div class="col-md-12">
+							<div class="form-group">
+								<label for="customer_name">Content Details:</label>
+								<textarea id="editor" name="aboutDetails"></textarea>
+								<span id="aboutDetails_error" style="color: red"></span>
+							</div>
+						</div>
+					</div>
+					<input type="hidden" id="contentDetails" name="contentDetails">
+					<input type="hidden" id="textcontentDetails" name="textcontentDetails">
+					<div class="buttons mt-3">
+						<button type="button" class="btn btn-lg btn-primary" style="width: 257px;margin-left:120px;" id="saveAboutDetails">Save Details</button>
+						<button type="button" class="btn btn-lg btn-danger" style="width: 257px;" data-dismiss="modal">Back</button>														
+					</div>			        
+			    </form>
+		    </div>
+		</div>
+	</div>
+</div>
+<!-- End Modal -->
+<!-- Edit Modal -->
+<!-- Add Modal -->
+<div class="modal fade" id="editContentModal" tabindex="-1" role="dialog" aria-labelledby="formModal"
+          aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+		    <div class="modal-header">
+				<h5 class="modal-title" id="formModal">Edit Content Details</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				  <span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+		    <div class="modal-body">
+			    <form method="Post" id="edit_content_form">
+                        @csrf
+                        <input type="hidden" id="edit_id" name="edit_id">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="customer_name">Title Name:</label>
+                                            <select class="form-control form-control-user success" name="editTitleName"  id="editTitleName">
+											    <option value="">Select</option>
+												<option value="About Company">About Company</option>
+												<option value="Our Aim">Our Aim</option>
+												<option value="Our Strength">Our Strength</option>
+												<option value="Employer's Testimonial">Employer's Testimonial</option>
+												<option value="Employee's Testimonial">Employee's Testimonial</option>
+												<option value="Terms And Conditions">Terms And Conditions</option>
+											</select>
+                                            <span id="editTitleName_error" style="color: red"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="customer_name">Content Details:</label>
+                                            <textarea id="editor" name="editContentDetails"></textarea>
+                                            <span id="editContentDetails_error" style="color: red"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="editcontentDetails" name="editcontentDetails">
+                                <input type="hidden" id="edittextcontentDetails" name="edittextcontentDetails">
+								<div class="buttons mt-3">
+									<button type="button" class="btn btn-lg btn-primary" style="width: 257px;margin-left:120px;" id="editAboutDetails">Save Details</button>
+									<button type="button" class="btn btn-lg btn-danger" style="width: 257px;" data-dismiss="modal">Back</button>														
+								</div>
+                            </div>
+                        </div>
+                    </form>
+		    </div>
+		</div>
+	</div>
+</div>
+<!-- End Modal -->
+
+@section('javascript')
+@include('masterModules.js.about')
+@endsection
+@endsection

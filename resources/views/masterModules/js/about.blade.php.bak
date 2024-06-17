@@ -1,0 +1,192 @@
+<script>
+
+tinymce.init({
+		//selector: 'textarea',
+	  });
+	
+$('#saveAboutDetails').click(function() {
+   //alert ('hello');
+	var form = $('#aboutForm')[0];
+	var content= tinyMCE.activeEditor.getContent();
+	var details= $('#contentDetails').val(content);
+	var textcontent= tinyMCE.activeEditor.getContent({format : 'text'});
+	var textdetails= $('#textcontentDetails').val(textcontent);
+	//console.log(details);
+	var data = new FormData(form);
+
+	toastr.options = {
+		"closeButton": true,
+		"newestOnTop": true,
+		"positionClass": "toast-top-right"
+	};
+	$.ajax({
+		url: "{{ route('masterModules.aboutstore') }}",
+		headers: {'X-CSRF-TOKEN': $('input[name="_token"]').val()},
+		type: 'post',
+		data: data,
+		processData: false,
+		contentType: false,
+		cache: false,
+		dataType: 'json',
+		beforeSend: function() {
+			$('#loader').show()
+		},
+		success: function(data) {
+			if (data.status == 'success') {
+					swal("Good Job", data.message, "success");
+                }
+			if(data.status == 'wrong')
+				{
+					swal("Error Occur", data.message, "error");
+				}
+		},
+		error: function(error) {
+			$('#loader').hide()
+                var err = error.responseJSON.errors;
+                if (error.status == 422) {
+                    $('#titleName_error').html(err.titleName)					
+                }
+			console.log(error)
+		}
+	})
+});
+
+$('#aboutForm :input').click(function() {
+	$('#titleName_error').html('')
+   // $('#conditionDetails_error').html('')
+})	
+ 
+$('body').on('click','.swal-button',function(){
+		location.reload();
+})
+
+$('body').on('click', '#editContentDetails', function() {
+		//$('#viewBrokerModal').modal('show');
+		var quotaton_id = $(this).attr('rel');
+		$.ajax({
+			url: "{{ route('editContentDetails') }}",
+			type: "get",
+			data: {
+				"_token": "{{ csrf_token() }}",
+				id: quotaton_id
+			},
+			dataType: "json",
+			beforeSend: function() {
+				$('#user_loder').show()
+			},
+			success: function(data) {
+				//$('#user_loder').hide();
+				//alert("pass")
+				 //console.log(data);
+				$('#editTitleName').val(data[0].titleName);
+				 $('#edit_id').val(data[0].id)
+				 var editDetails= data[0].aboutDetails
+				 tinyMCE.activeEditor.setContent(editDetails);
+				$('#editContentModal').modal('show');
+				//alert("Pass")	
+			},
+			error: function(data) {
+				$('#user_loder').hide();
+				// alert("Fail");
+				console.log(data);
+			}
+		})
+	});
+	
+$('#editAboutDetails').click(function() {
+   //alert ('hello');
+	var form = $('#edit_content_form')[0];
+	var editcontent= tinyMCE.activeEditor.getContent();
+	var editdetails= $('#editcontentDetails').val(editcontent);
+	var editTextcontent= tinyMCE.activeEditor.getContent({format : 'text'});
+	var editTextdetails= $('#edittextcontentDetails').val(editTextcontent);
+	//console.log(details);
+	var data = new FormData(form);
+
+	toastr.options = {
+		"closeButton": true,
+		"newestOnTop": true,
+		"positionClass": "toast-top-right"
+	};
+	$.ajax({
+		url: "{{ route('saveEditContentDetails') }}",
+		headers: {'X-CSRF-TOKEN': $('input[name="_token"]').val()},
+		type: 'post',
+		data: data,
+		processData: false,
+		contentType: false,
+		cache: false,
+		dataType: 'json',
+		beforeSend: function() {
+			$('#loader').show()
+		},
+		success: function(data) {
+			if (data.status == 'success') {
+					swal("Good Job", data.message, "success");
+                }
+			else{
+					swal("Error Occur", "There is some issue while saving data", "error");
+				}
+		},
+		error: function(error) {
+                $('#loader').hide()
+                var err = error.responseJSON.errors;
+                if (error.status == 422) {
+                    $('#editTitleName_error').html(err.editTitleName)					
+                }
+                console.log(error)
+            }
+	})
+});
+
+$('#edit_content_form :input').click(function() {
+	$('#editTitleName_error').html('')
+})
+
+$('body').on('click','#deleteContent',function() 
+	{
+		var delID= $(this).attr('rel');
+		swal({
+				title: "Are you sure?",
+				text: "Once deleted, you will not be able to recover this data!",
+				icon: "warning",
+				buttons: true,
+				dangerMode: true,
+			}).then((willDelete) => 
+			{
+			     if (willDelete) 
+				 {
+					$.ajax({
+						url: "{{ route('deleteContentDetails') }}",
+						type: "post",
+						dataType: 'json',
+						data: {
+							"_token": "{{ csrf_token() }}",
+							id: delID,
+						},
+						beforeSend: function() {
+							$('#loader').show()
+						},
+						success: function(data) 
+						{
+							if (data.status == 'success') 
+							{
+								swal("Poof! Your data has been deleted!", {
+									icon: "success",
+								  });
+							} 
+							else
+							{
+								swal("Error", "Data Not Deleted!", "error");
+							}
+						}
+					})
+		        }
+			    else {
+				        swal("Your data is safe!");
+				    }
+			});
+            })
+});
+	
+</script>

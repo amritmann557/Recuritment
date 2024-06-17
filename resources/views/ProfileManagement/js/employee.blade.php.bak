@@ -1,0 +1,345 @@
+<script>
+(function($){
+    $.fn.extend({
+        donetyping: function(callback,timeout){
+            timeout = timeout || 1e3; // 1 second default timeout
+            var timeoutReference,
+                doneTyping = function(el){
+                    if (!timeoutReference) return;
+                    timeoutReference = null;
+                    callback.call(el);
+                };
+            return this.each(function(i,el){
+                var $el = $(el);
+                // Chrome Fix (Use keyup over keypress to detect backspace)
+                // thank you @palerdot
+                $el.is(':input') && $el.on('keyup keypress paste',function(e){
+                    // This catches the backspace button in chrome, but also prevents
+                    // the event from triggering too preemptively. Without this line,
+                    // using tab/shift+tab will make the focused element fire the callback.
+                    if (e.type=='keyup' && e.keyCode!=8) return;
+
+                    // Check if timeout has been set. If it has, "reset" the clock and
+                    // start over again.
+                    if (timeoutReference) clearTimeout(timeoutReference);
+                    timeoutReference = setTimeout(function(){
+                        // if we made it here, our timeout has elapsed. Fire the
+                        // callback
+                        doneTyping(el);
+                    }, timeout);
+                }).on('blur',function(){
+                    // If we can, fire the event since we're leaving the field
+                    doneTyping(el);
+                });
+            });
+        }
+    });
+})(jQuery);
+
+$('#saveEmployeeDetails').click(function() {
+	   //alert ('hello');
+        var form = $('#add_Employee_details')[0];
+        var data = new FormData(form);
+
+        toastr.options = {
+            "closeButton": true,
+            "newestOnTop": true,
+            "positionClass": "toast-top-right"
+        };
+        $.ajax({
+            url: "{{ route('ProfileManagement.store') }}",
+			headers: {'X-CSRF-TOKEN': $('input[name="_token"]').val()},
+            type: 'post',
+            data: data,
+            processData: false,
+            contentType: false,
+            cache: false,
+            dataType: 'json',
+            beforeSend: function() {
+                $('#loader').show()
+            },
+            success: function(data) {
+                $('#loader').hide()
+                if (data.status == 'success') {
+					swal("Good Job", data.message, "success");
+                }
+				else{
+					swal("Error Occur", "There is some issue while saving data", "error");
+				}
+            },
+            error: function(error) {
+                $('#loader').hide()
+                var err = error.responseJSON.errors;
+                if (error.status == 422) {
+                    toastr.error("Error");
+                    $('#employeeName_error').html(err.employeeName)
+                    $('#contact_number_error').html(err.contact_number)
+                    $('#position_error').html(err.position)
+                    $('#email_error').html(err.email)
+                    $('#password_error').html(err.password)
+                    if (err.employeeName) {
+                        toastr.error(err.employeeName);
+                    }
+					if (err.contact_number) {
+                        toastr.error(err.contact_number);
+                    }
+					if (err.position) {
+                        toastr.error(err.position);
+                    }
+                    if (err.email) {
+                        toastr.error(err.email);
+                    }
+                    if (err.password) {
+                        toastr.error(err.password);
+                    }					
+                }
+                console.log(error)
+            }
+        })
+    });
+	
+	$('#add_course_details :input').click(function() {
+        $('#employeeName_error').html('')
+        $('#contact_number_error').html('')
+        $('#position_error').html('')
+        $('#password_error').html('')
+        $('#email_error').html('')
+    })
+	
+$('#email').donetyping(function(){
+	var email= $('#email').val();
+        $.ajax({
+			url: "{{ route('checkEmail') }}",
+			type: "get",
+			data: 
+			{
+				"_token": "{{ csrf_token() }}",
+				 data: email 
+			},
+			dataType: "json",
+			beforeSend: function() 
+			{
+				$('#loader').show()
+			},
+			success: function(data) 
+			{
+				if (data.status == 'success') {
+					$('#email_error').html('Email Address Already taken');
+					$('#saveEmployeeDetails').prop('disabled', true);
+                }
+				else{
+					$('#email_error').html('Good To Go..').css('color', 'green');
+					$('#saveEmployeeDetails').prop('disabled', false);
+				}
+				$('#loader').hide();
+			},
+			error: function() 
+			{
+				$('#loader').hide();
+			}
+		})
+})
+
+$('body').on('click','#viewEmployeeButton',function()
+	{
+	var id=$(this).attr('rel');
+    $.ajax({
+    url: "{{ route('viewEmployeeDetails') }}",
+    type: "get",
+    data: 
+	{
+        "_token": "{{ csrf_token() }}",
+         id: id
+    },
+    dataType: "html",
+    beforeSend: function() 
+	{
+        $('#loader').show()
+    },
+    success: function(data) 
+	{
+        $('#view_Details').html(data);
+        $('#viewEmployeeModal').modal('show');	
+        $('#loader').hide();		
+		//alert("Pass")	
+    },
+    error: function() 
+	{
+       $('#loader').hide();
+        alert("Fail")
+    }
+    })
+	});
+	
+$('body').on('click','#closeModal',function(){
+	$('#viewEmployeeModal').modal('hide');
+})
+
+$('body').on('click','#closeEditModal',function(){
+	$('#editEmployeeModal').modal('hide');
+})
+
+$('body').on('click','#editEmployeeButton',function(){
+	var id=$(this).attr('rel');
+    $.ajax({
+    url: "{{ route('editEmployeeDetails') }}",
+    type: "get",
+    data: 
+	{
+        "_token": "{{ csrf_token() }}",
+         id: id
+    },
+    dataType: "html",
+    beforeSend: function() 
+	{
+        $('#loader').show()
+    },
+    success: function(data) 
+	{
+        $('#show_edit_Details').html(data);
+        $('#editEmployeeModal').modal('show');	
+        $('#loader').hide();		
+		//alert("Pass")	
+    },
+    error: function() 
+	{
+        $('#loader').hide();
+        alert("Fail")
+    }
+    })
+	});
+	
+$('body').on('click','#saveEditEmployeeButton',function(){
+		//alert('Hello');
+		var brokerId = $('#editID').val();
+                var form = $('#edit_employee_details')[0];
+                var data = new FormData(form);
+				data.append('id',brokerId)
+				var url= "{{ route('saveEditEmployeeDetails') }}";
+                toastr.options = 
+				{
+                    "closeButton": true,
+                    "newestOnTop": true,
+                    "positionClass": "toast-top-right"
+                };
+            $.ajax
+			({
+                url: url,
+			    headers: {'X-CSRF-TOKEN': $('input[name="_token"]').val()},
+                type: 'post',
+                data: data,
+                processData: false,
+                contentType: false,
+                cache: false,
+                dataType: 'json',
+                beforeSend: function() {
+                $('#loader').show()
+            },
+            success: function(data) {
+                $('#loader').hide()
+                if (data.status == 'success') {
+					swal("Good Job", data.message, "success");
+                }
+				else{
+					swal("Error Occur", "There is some issue while saving data", "error");
+				}
+            },
+            error: function(error) 
+			{
+                $('#loader').hide()
+                var err = error.responseJSON.errors;
+                if (error.status == 422) {
+                    toastr.error("Error");
+                    $('#edit_employeeName_error').html(err.edit_employeeName)
+                    $('#edit_contact_number_error').html(err.edit_contact_number)
+                    $('#edit_contact_number2_error').html(err.edit_contact_number2)
+                    $('#edit_relationWithContact_error').html(err.edit_relationWithContact)
+                    $('#edit_position_error').html(err.edit_position)
+                    $('#edit_department_error').html(err.edit_department)
+                    $('#edit_email_error').html(err.edit_email)
+                    if (err.edit_employeeName) {
+                        toastr.error(err.edit_employeeName);
+                    }
+					if (err.edit_contact_number) {
+                        toastr.error(err.edit_contact_number);
+                    }
+					if (err.edit_contact_number2) {
+                        toastr.error(err.edit_contact_number2);
+                    }
+					if (err.edit_relationWithContact) {
+                        toastr.error(err.edit_relationWithContact);
+                    }
+					if (err.edit_position) {
+                        toastr.error(err.edit_position);
+                    }
+					if (err.edit_department) {
+                        toastr.error(err.edit_department);
+                    }
+                    if (err.edit_email) {
+                        toastr.error(err.edit_email);
+                    }					
+                }
+                console.log(error)
+            }
+        })
+	});
+	
+$('#edit_employee_details :input').click(function() {
+        $('#edit_employeeName_error').html('')
+        $('#edit_contact_number_error').html('')
+        $('#edit_contact_number2_error').html('')
+        $('#edit_position_error').html('')
+        $('#edit_department_error').html('')
+        $('#edit_email_error').html('')
+    })
+	
+$('body').on('click','#deleteEmployeeButton',function() 
+{
+var delID= $(this).attr('rel');
+//alert(delID)
+swal({
+		title: "Are you sure?",
+		text: "Once deleted, you will not be able to recover this data!",
+		icon: "warning",
+		buttons: true,
+		dangerMode: true,
+	}).then((willDelete) => 
+	{
+		 if (willDelete) 
+		 {
+			$.ajax({
+				url: "{{ route('deleteEmployeeDetails') }}",
+				type: "post",
+				dataType: 'json',
+				data: {
+					"_token": "{{ csrf_token() }}",
+					id: delID,
+				},
+				beforeSend: function() {
+					$('#loader').show()
+				},
+				success: function(data) 
+				{
+					if (data.status == 'success') 
+					{
+						swal("Poof! Your data has been deleted!", {
+							icon: "success",
+						  });
+					} 
+					else
+					{
+						swal("Error", "Data Not Deleted!", "error");
+					}
+				}
+			})
+		}
+		else {
+				swal("Your data is safe!");
+			}
+	});
+})
+
+$('body').on('click','.swal-button',function(){
+	location.reload();
+})
+</script>

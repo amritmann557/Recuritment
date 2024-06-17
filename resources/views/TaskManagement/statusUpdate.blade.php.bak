@@ -1,0 +1,21 @@
+<form method="post" id="update_status_Form">
+	@csrf
+	<input type="hidden" id="updateStatusID" name="updateStatusID" value="{{$data[0]->id}}">
+	<div class="row">
+		<div class="col-md-12">
+			<label class="design">Select Status</label>
+			<select class="form-control" id="statusUpdate" name="statusUpdate">
+							<option value="">Select</option>
+							@foreach($update as $status)
+							<option <?php if($data[0]->Status == $status->statusName){ echo 'Selected'; }?> value="{{$status->statusName}}">{{$status->statusName}}</option>
+							@endforeach
+						</select>
+			<span id="statusUpdate_error" style="color: red"></span>
+		</div>
+	</div>
+	<div class="buttons mt-5">
+		<button type="button" class="btn btn-lg btn-primary" id="UpdateStatusButton">Update Status</button>
+		<button type="button" class="btn btn-lg btn-danger"  data-dismiss="modal" id="closeModal">Back</button>														
+	</div>
+</form>
+

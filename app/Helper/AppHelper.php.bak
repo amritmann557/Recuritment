@@ -1,0 +1,34 @@
+<?php
+namespace App\Helper;
+use Session;
+use DB;
+use App\Models\TaskManagement;
+use App\Models\EmployeeManagement;
+
+class AppHelper {
+
+public static function getIndividualCount($empID)
+    {
+        //echo '<pre>'; print_r($driverID);
+         $data['individual'] = TaskManagement::where('staffName', $empID)->get()->count();
+         //echo '<pre>'; print_r($data['individual']);
+         return $data;
+    }
+
+public static function getCompletedCount()
+    {
+        //echo '<pre>'; print_r($driverID);
+         $data['comp'] = TaskManagement::where('Status', 'Completed')->get()->count();
+         //echo '<pre>'; print_r($data['individual']);
+         return $data;
+    }
+    
+public static function getPendingCount()
+    {
+        //echo '<pre>'; print_r($driverID);
+         $data['comp'] = TaskManagement::where('Status', 'Pending')->get()->count();
+         //echo '<pre>'; print_r($data['individual']);
+         return $data;
+    }
+}
+?>

@@ -1,0 +1,192 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\LeadsManagement;
+use App\Models\StatusMaster;
+use App\Models\EmployeeManagement;
+use Illuminate\Http\Request;
+use Auth;
+
+class LeadsManagementController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+		$data['status']= StatusMaster::get(); 
+		if(Auth::user()->position == 'Super Admin'){
+		$data['lead']= LeadsManagement::get(); 
+		}
+		else{
+		$data['lead']= LeadsManagement::where('assignedTo', Auth::user()->name)->get();	
+		}
+		$data['employee']= EmployeeManagement::where('status','Active')->get(); 
+        return view('LeadsManagement.leads',$data);
+    }
+
+    public function store(Request $request)
+	{
+		$lead_data = $request->validate([
+			'leadName'         => ['required','string', 'max:255'],
+            'contact_number'   => ['required'],
+            'leadStatus'       => ['required'],
+        ], [
+		    'leadName.required'          => 'Please Enter Lead Name',
+            'contact_number.required'    => 'Please Enter Contact Number',
+            'leadStatus.required'        => 'Please Select Lead Status',
+        ]);	   
+	    $unique_id = LeadsManagement::orderBy('id', 'desc')->first();
+	    $number = str_replace('RGL', '', $unique_id ? $unique_id->unqiue_id  : 0);
+	    if ($number == 0) {
+	    $number = 'RGL0000001';
+	    } else {
+		$number = "RGL" . sprintf("%07d", (int)$number + 1);
+	    }
+		if($_POST['leadDate'] != NULL){
+        $lead_data['unqiue_id']= $number;	   
+        $lead_data['companyName']= $_POST['companyName'];	   
+        $lead_data['leadLocation']= $_POST['leadLocation'];	   
+        $lead_data['contactPerson']= $_POST['contactPerson'];	   
+        $lead_data['notes']= $_POST['notes'];	   
+        $lead_data['leadDate']= $_POST['leadDate'];	   
+        $lead_data['leadTime']= $_POST['leadTime'];	   
+        $lead_data['assignedTo']= $_POST['assignedTo'];	   
+        $lead_data['leadAddedBy']= $_POST['leadAddedBy'];
+		}
+        else
+		{
+		$lead_data['unqiue_id']= $number;	   
+        $lead_data['companyName']= $_POST['companyName'];	   
+        $lead_data['leadLocation']= $_POST['leadLocation'];	   
+        $lead_data['contactPerson']= $_POST['contactPerson'];	      
+        $lead_data['assignedTo']= $_POST['assignedTo'];	   
+        $lead_data['leadAddedBy']= $_POST['leadAddedBy'];
+		}		
+	    $data=LeadsManagement::insert($lead_data);
+	    echo json_encode(['status' => 'success', 'message' => 'Lead Data Succesfully Submitted']);
+	}
+	
+	public function viewLeadsDetails()
+	{
+		$result['data']=LeadsManagement::select('*')
+                           ->where('id',$_GET['id'])
+                           ->get();
+        return view('LeadsManagement.viewLeadDetails',$result);
+	}
+	
+	public function editLeadsDetails()
+	{
+		$result['status']= StatusMaster::get(); 
+		$result['employee']= EmployeeManagement::where('status','Active')->get();
+		$result['data']=LeadsManagement::where('id',$_GET['id'])
+                           ->get();
+        return view('LeadsManagement.editLeadDetails',$result);
+	}
+	
+	public function saveEditLeadsDetails(Request $request)
+	{
+		$id= $request->id;
+		$edit_Lead_data = $request->validate([
+			'edit_leadName'         => ['required','string', 'max:255'],
+            'edit_contact_number'   => ['required'],
+            'edit_leadStatus'       => ['required'],
+        ], [
+		    'edit_leadName.required'          => 'Please Enter Lead Name',
+            'edit_contact_number.required'    => 'Please Enter Contact Number',
+            'edit_leadStatus.required'        => 'Please Select Lead Status',
+        ]);
+	  //echo '<pre>'; print_r($id);die;
+		$leadArr=array(
+		'leadName'           => $_POST['edit_leadName'],
+        'companyName'        => $_POST['edit_companyName'],
+        'contact_number'     => $_POST['edit_contact_number'],
+        'contactPerson'      => $_POST['edit_contactPerson'],
+        'leadLocation'       => $_POST['edit_leadLocation'],
+        'leadStatus'         => $_POST['edit_leadStatus'],
+        'assignedTo'         => $_POST['edit_assignedTo'],
+        'leadStatus'         => $_POST['edit_leadStatus'],
+	    'leadAddedBy'        => $_POST['edit_leadAddedBy'],
+	    'leadDate'           => $_POST['edit_leadDate'],
+	    'leadTime'           => $_POST['edit_leadTime'],
+	    'notes'              => $_POST['edit_notes']
+		);
+		
+		$data=LeadsManagement::where('id',$id)->update($leadArr);
+		echo json_encode(['status' => 'success', 'message' => 'Leads Details Updated Successfully']);
+	}
+	
+	public function deleteLeadsDetails()
+	{
+		$data=LeadsManagement::where('id', $_POST['id'])->delete();
+        echo json_encode(['status' => 'success', 'message' => 'Data Deleted Successfully']);
+	}
+	
+	public function markToSales(Request $request)
+	{
+		$design_data = $request->validate([
+			'designImage'         => ['required'],
+        ], [
+		    'designImage.required' => 'Please upload Design Image',
+        ]);
+		
+		$str_time = time();
+		if ($request->file('designImage')) {
+            $file_type = $request->file('designImage')->extension();
+            $file_path = $request->file('designImage')->storeAs('img/design', 'Design_' . $str_time . '.' . $file_type, 'public');
+            $request->file('designImage')->move(public_path('img/design'), 'Design_' . $str_time . '.' . $file_type);
+        } else {
+            $file_path = null;
+        }
+	  //echo '<pre>'; print_r($id);die;
+		$leadArr=array(
+		'designImage'        => $file_path,
+        'designerNotes'      => $_POST['designerNotes'],
+		'moveToSales'        => 1,
+		);
+		
+		$data=LeadsManagement::where('id',$_POST['designID'])->update($leadArr);
+		echo json_encode(['status' => 'success', 'message' => 'Sales Added Successfully']);
+	}
+	
+	public function salesList()
+	{
+		$data['sales']= LeadsManagement::where('moveToSales',1)->get();
+		return view('LeadsManagement.salesList',$data);
+	}
+	
+	public function edit_salesList()
+	{
+		$result['data']= LeadsManagement::where('id',$_GET['id'])->get();
+		return view('LeadsManagement.editSalesList',$result);
+	}
+	
+	public function save_edit_salesList(Request $request)
+	{
+		$id= $request->editDesignID;
+		$str_time = time();
+		if ($request->file('editDesignImage')) {
+            $file_type = $request->file('editDesignImage')->extension();
+            $file_path = $request->file('editDesignImage')->storeAs('img/design', 'Design_' . $str_time . '.' . $file_type, 'public');
+            $request->file('editDesignImage')->move(public_path('img/design'), 'Design_' . $str_time . '.' . $file_type);
+        } else {
+            $file_path = $request->productPhoto;
+        }
+		//echo '<pre>';print_r($file_path);die;
+		$arr=array(
+		'designImage' => $file_path,
+		'designerNotes' => $_POST['editDesignerNotes'],
+		);
+		
+		$data= LeadsManagement::where('id', $id)->update($arr);
+		echo json_encode(['status' => 'success', 'message' => 'Sales Updated Successfully']);
+	}
+	
+	public function download_Design(){
+		$file = LeadsManagement::where('id', $_GET['id'])->first();
+		//echo '<pre>'; print_r($file);die;
+        $pathofFile = storage_path($file->designImage);
+        return response()->download($pathofFile);
+	}
+}

@@ -1,0 +1,163 @@
+<script>
+$(document).ready(function() {
+	$('body').on('click','#saveMartialDetails',function(){
+		var form = $('#martialForm')[0];
+        var data = new FormData(form);
+        $.ajax({
+            url: "{{ route('masterModules.martialStatusstore') }}",
+			headers: {'X-CSRF-TOKEN': $('input[name="_token"]').val()},
+            type: 'post',
+            data: data,
+            processData: false,
+            contentType: false,
+            cache: false,
+            dataType: 'json',
+            beforeSend: function() {
+                $('#loader').show()
+            },
+            success: function(data) {
+                if (data.status == 'success') {
+					swal("Good Job", data.message, "success");
+                }
+				else{
+					swal("Error Occur", "There is some issue while saving data", "error");
+				}
+                
+            },
+            error: function(error) {
+                $('#loader').hide()
+                var err = error.responseJSON.errors;
+                if (error.status == 422) {
+                    $('#martialStatusName_error').html(err.martialStatusName)					
+                }
+                console.log(error)
+            }
+        })
+	})
+	
+	$('#martialForm :input').click(function() {
+	$('#martialStatusName_error').html('')                
+    })
+	
+	$('body').on('click','.swal-button',function(){
+		location.reload();
+	})
+	
+	$('body').on('click','#editMartial',function(){
+		var id=$(this).attr('rel');
+		$.ajax({
+		url: "{{ route('editMartialDetails') }}",
+		type: "get",
+		data: 
+		{
+			"_token": "{{ csrf_token() }}",
+			 id: id
+		},
+		dataType: "html",
+		beforeSend: function() 
+		{
+			$('#loader').show()
+		},
+		success: function(data) 
+		{
+			$('#loader').hide();
+			$('#showDetails').html(data);
+			$('#editModal').modal('show');		
+		},
+		error: function() 
+		{
+			$('#loader').hide();
+			alert("Fail")
+		}
+		})
+	})
+	
+	$('body').on('click','#saveEditMartialbutton',function(){
+		var id = $('#editID').val();
+		var form = $('#editMartialForm')[0];
+        var data = new FormData(form);
+		data.append('id',id)
+        $.ajax({
+            url: "{{ route('saveEditMartialDetails') }}",
+			headers: {'X-CSRF-TOKEN': $('input[name="_token"]').val()},
+            type: 'post',
+            data: data,
+            processData: false,
+            contentType: false,
+            cache: false,
+            dataType: 'json',
+            beforeSend: function() {
+                $('#loader').show()
+            },
+            success: function(data) {
+                if (data.status == 'success') {
+					swal("Good Job", data.message, "success");
+                }
+				else{
+					swal("Error Occur", "There is some issue while Updating", "error");
+				}
+                
+            },
+            error: function(error) {
+                $('#loader').hide()
+                var err = error.responseJSON.errors;
+                if (error.status == 422) {
+                    $('#martialStatusName_error').html(err.martialStatusName)					
+                }
+                console.log(error)
+            }
+        })
+	})
+	
+	$('#editMartialForm :input').click(function() {
+	$('#martialStatusName_error').html('')                
+    })
+	
+	$('body').on('click','#deleteMartial',function() 
+	{
+		var delID= $(this).attr('rel');
+		swal({
+				title: "Are you sure?",
+				text: "Once deleted, you will not be able to recover this data!",
+				icon: "warning",
+				buttons: true,
+				dangerMode: true,
+			}).then((willDelete) => 
+			{
+			     if (willDelete) 
+				 {
+					$.ajax({
+						url: "{{ route('deleteMartialDetails') }}",
+						type: "post",
+						dataType: 'json',
+						data: {
+							"_token": "{{ csrf_token() }}",
+							id: delID,
+						},
+						beforeSend: function() {
+							$('#loader').show()
+						},
+						success: function(data) 
+						{
+							if (data.status == 'success') 
+							{
+								swal("Poof! Your data has been deleted!", {
+									icon: "success",
+								  });
+							} 
+							else
+							{
+								swal("Error", "Data Not Deleted!", "error");
+							}
+						}
+					})
+		        }
+			    else {
+				        swal("Your data is safe!");
+				    }
+			});
+            })
+});
+
+
+</script>

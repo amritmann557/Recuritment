@@ -1,0 +1,260 @@
+@extends('layouts_new.app_new')
+@section('content')
+<section class="section">
+    <ul class="breadcrumb breadcrumb-style ">
+		<li class="breadcrumb-item">
+		  <h4 class="page-title m-b-0">Tasks Management</h4>
+		</li>
+		<li class="breadcrumb-item">
+		  <a href="{{route('home')}}">
+			<i data-feather="home"></i></a>
+		</li>
+	    <li class="breadcrumb-item">Tasks</li>
+    </ul>
+    <div class="section-body">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3 p-0">
+                        <div class="contact-leftmenu">
+                            <div id="contact-nav">
+                                <div class="btnAdd">
+                                    <button type="button" id="addBtn" class="btn btn-icon icon-left btn-primary"><i
+                                        class="fas fa-plus"></i>New Task
+									</button>
+                                </div>
+                                <ul class="contact-list">
+                                    <li class="nav-item">
+										<a class="nav-link active" id="all" href="javascript:void(0);" data-type="contact-item">
+										  <i class="fas fa-tasks mr-2"></i> All Tasks
+										  <span class="counter">{{$allTask}}</span>
+										</a>
+                                    </li>
+									@foreach($employee as $data)
+									<?php 
+									$complete = Helper::getCompletedCount($data->unique_id);
+									$pending = Helper::getPendingCount($data->unique_id);
+                                    ?>
+									@endforeach
+                                    <li class="nav-item">
+										<a class="nav-link" id="completed" href="javascript:void(0);" data-type="completed">
+										    <i class="far fa-thumbs-up mr-2"></i> Completed Task
+										</a>
+                                    </li>
+									<li class="nav-item">
+										<a class="nav-link" id="important" href="javascript:void(0);" data-type="important">
+										  <i class="far fa-star mr-2"></i> Pending
+										</a>
+									</li>
+                                </ul>
+                                <!-- ul class="contact-list">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="javascript:void(0);">
+                                            <i class="fas fa-upload mr-2"></i> Import
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+										<a class="nav-link" href="javascript:void(0);">
+										  <i class="fas fa-cloud-download-alt mr-2"></i> Export
+										</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="javascript:void(0);">
+                                            <i class="fas fa-print mr-2"></i> Print
+                                        </a>
+                                    </li>
+                                </ul -->
+                                <ul class="list-unstyled user-details list-unstyled-border list-unstyled-noborder contact-list">
+								    @foreach($employee as $data)
+                                    <li class="media d-flex mb-3">
+									    <?php if($data->gender == 'Female'){?>
+										<img alt="image" class="msr-3 rounded-circle" width="35" src="assets/img/user.png">
+										<?php }?>
+										<?php if($data->gender == 'Male'){?>
+										<img alt="image" class="msr-3 rounded-circle" width="35" src="assets/img/users/user-8.png">
+										<?php }?>
+										<?php if($data->gender == 'Others'){?>
+										<img alt="image" class="msr-3 rounded-circle" width="35" src="assets/img/users/user-1.png">
+										<?php }?>
+										<div class="flex-1">
+											<div class="media-title">{{$data->employeeName}}</div>
+											<div class="text-job text-muted">{{$data->position}}</div>
+										</div>
+										<div class="media-items">
+											<div class="media-item">
+											    <?php
+                                                $check = Helper::getIndividualCount($data->unique_id);
+                                                //echo '<pre>'; print_r($check);die;
+                                                ?>												
+												<div class="media-value">{{$check['individual']}}</div>
+												<div class="media-label">Tasks</div>
+											</div>
+										</div>
+                                    </li> 
+                                    @endforeach									
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+                        <div class="table-responsive">
+                            <!-- div class="contact-search">
+                                <input placeholder='Search...' class='js-search' type="text" id="searchItem">
+                                <i class="fa fa-search"></i>
+                            </div -->
+                            <table id="tableExport" class="table table-striped">
+                                <thead>
+                                    <tr>
+										<th>#</th>
+										<th>Employee Name</th>
+										<th>Title</th>
+										<th>Date</th>
+										<th>Status</th>
+										<th>Actions</th>
+									</tr>
+							    </thead>
+								<tbody>
+							    @foreach($task as $key=>$data)
+									<tr>
+										<td class="text-center">{{$key+1}}</td>
+										<td>{{$data->staffName}}</td>
+										<td>{{$data->title}}</td>									   
+										<td>{{$data->date}}</td>									   
+										<td>{{$data->Status}}</td>									   										
+										<td>
+										    <a href="#" rel="{{$data->id}}" class="btn btn-primary" id="statusButton">Update Status</a>
+											<?php if(Auth::user()->position == 'Super Admin'){?>
+											<a href="#" rel="{{$data->id}}" class="btn btn-primary" id="editTaskButton">Edit</a>
+											<a href="#" class="btn btn-primary" rel="{{$data->id}}" id="deleteTaskButton">Delete</a>
+											<?php } ?>
+										</td>
+									</tr>
+                                @endforeach 
+						    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Modal -->
+<div class="modal fade" id="taskForm" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Task Details</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				  <span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+	        <div class="modal-body">
+		        <form id="myForm">
+				    @csrf
+				    <!-- div class="custom-control custom-checkbox mb-3">
+					    <input type="checkbox" class="custom-control-input prio-check" id="status" name="status">
+					    <label class="custom-control-label" for="status">Mark as completed</label>
+				    </div -->
+					<div class="form-group">
+			            <label>Staff Name:</label>
+			            <select class="form-control textItemModal" id="staffName" name="staffName">
+						    <option value="">Select</option>
+							@foreach($employee as $empName)
+						    <option value="{{$empName->unique_id}}">{{$empName->employeeName}}</option>
+							@endforeach
+						</select>
+						<span id="staffName_error" style="color: red"></span>
+		            </div>
+		            <div class="form-group">
+			            <label>Title:</label>
+			            <input data-src="title" name="title" id="title" class="form-control textItemModal">
+						<span id="title_error" style="color: red"></span>
+		            </div>
+		            <div class="form-group">
+			            <label>Date:</label>
+			            <input data-src="date" class="form-control textItemModal datepicker" name="date" id="date">
+						<span id="date_error" style="color: red"></span>
+		            </div>
+		            <div class="form-group">
+			            <div class="section-title">Priority</div>
+						<select class="form-control" id="priority" name="priority">
+						    <option value="">Select</option>
+						    <option value="Low">Low</option>
+						    <option value="Medium">Medium</option>
+						    <option value="High">High</option>
+						</select>
+						<span id="priority_error" style="color: red"></span>
+				    </div>
+					<div class="form-group">
+						<label>Details</label>
+						<textarea data-src="details" class="form-control textAreaModal" name="details" id="details"></textarea>
+					</div>
+					<div class="modal-footer pr-0">
+						<button type="button" class="btn btn-lg btn-primary" id="submitData">Save changes</button>
+						<button type="button" class="btn btn-lg btn-danger" data-dismiss="modal">Close</button>
+					</div>
+		        </form>
+	        </div>
+	    </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Edit Task Details</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				  <span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+	        <div class="modal-body" id="show_edit_Details">
+		        
+	        </div>
+	    </div>
+    </div>
+</div>
+<!-- End Modal -->
+<div class="modal fade bd-example-modal-sm" id="statusUpdateModal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel"
+     aria-hidden="true">
+	<div class="modal-dialog modal-md">
+		<div class="modal-content">
+		    <div class="modal-header">
+				<h5 class="modal-title" id="mySmallModalLabel">Update Status</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				  <span aria-hidden="true">&times;</span>
+				</button>
+		    </div>
+			<div class="modal-body">
+				<div class="card-body" id="status_details">
+					
+			    </div>
+		    </div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade bd-example-modal-sm" id="completedModal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel"
+     aria-hidden="true">
+	<div class="modal-dialog modal-md">
+		<div class="modal-content">
+		    <div class="modal-header">
+				<h5 class="modal-title" id="mySmallModalLabel">Completed Tasks Detail</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				  <span aria-hidden="true">&times;</span>
+				</button>
+		    </div>
+			<div class="modal-body">
+				<div class="card-body" id="completed_details">
+					
+			    </div>
+		    </div>
+		</div>
+	</div>
+</div>
+@section('javascript')
+@include('TaskManagement.js.task')
+@endsection
+@endsection
